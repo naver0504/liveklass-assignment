@@ -1,0 +1,15 @@
+plugins {
+	id 'org.springframework.boot'
+}
+
+dependencies {
+	implementation project(':notification-core')
+}
+
+bootJar {
+	enabled = true
+}
+
+jar {
+	enabled = false
+}
