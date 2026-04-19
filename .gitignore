@@ -39,4 +39,4 @@ out/
 ### .claude ###
 .claude/
 .codex/
-.plan/
+/plan
