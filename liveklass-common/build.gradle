@@ -2,6 +2,10 @@ plugins {
 	id 'java-library'
 }
 
+dependencies {
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
 jar {
 	enabled = true
 }
