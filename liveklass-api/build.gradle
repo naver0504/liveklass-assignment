@@ -1,0 +1,17 @@
+plugins {
+	id 'org.springframework.boot'
+}
+
+dependencies {
+	implementation project(':notification-core')
+	implementation project(':lecture-core')
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+}
+
+bootJar {
+	enabled = true
+}
+
+jar {
+	enabled = false
+}

@@ -1,1 +1,6 @@
 rootProject.name = 'assignment'
+include 'liveklass-common'
+include 'lecture-core'
+include 'notification-core'
+include 'liveklass-api'
+include 'notification-worker'
