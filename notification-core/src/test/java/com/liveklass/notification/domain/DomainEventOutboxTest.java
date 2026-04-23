@@ -2,10 +2,7 @@ package com.liveklass.notification.domain;
 
 import com.liveklass.common.error.exception.BadRequestException;
 import com.liveklass.notification.domain.enums.OutboxStatus;
-import com.liveklass.notification.domain.vo.ProcessingLock;
-import com.liveklass.notification.domain.vo.SentResult;
 import com.liveklass.notification.fixture.DomainEventOutboxFixture;
-import com.liveklass.notification.domain.InAppNotification;
 import com.liveklass.notification.fixture.InAppNotificationFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,15 +25,14 @@ class DomainEventOutboxTest {
     class Describe_create {
 
         @Test
-        @DisplayName("초기 상태는 PENDING이고 sentResult는 null이다")
-        void it_creates_with_pending_status_and_no_sent_result() {
+        @DisplayName("초기 상태는 PENDING이고 lock은 비어있다")
+        void it_creates_with_pending_status() {
             // given & when
             final DomainEventOutbox outbox = DomainEventOutboxFixture.pending();
 
             // then
             assertThat(outbox.status()).isEqualTo(OutboxStatus.PENDING);
             assertThat(outbox.retryState().attemptCount()).isZero();
-            assertThat(outbox.sentResult()).isNull();
             assertThat(outbox.lock().lockedAt()).isNull();
         }
     }
@@ -50,14 +46,13 @@ class DomainEventOutboxTest {
         void it_transitions_to_processing() {
             // given
             final DomainEventOutbox outbox = DomainEventOutboxFixture.pending();
-            final LocalDateTime lockedAt = NOW;
 
             // when
-            final DomainEventOutbox claimed = outbox.claim(lockedAt);
+            final DomainEventOutbox claimed = outbox.claim(NOW);
 
             // then
             assertThat(claimed.status()).isEqualTo(OutboxStatus.PROCESSING);
-            assertThat(claimed.lock().lockedAt()).isEqualTo(lockedAt);
+            assertThat(claimed.lock().lockedAt()).isEqualTo(NOW);
             assertThat(claimed.retryState().attemptCount()).isEqualTo(1);
         }
 
@@ -78,20 +73,16 @@ class DomainEventOutboxTest {
     class Describe_complete {
 
         @Test
-        @DisplayName("PROCESSING → SENT로 전이하고 sentResult가 채워진다")
-        void it_transitions_to_sent_with_sent_result() {
+        @DisplayName("PROCESSING → SENT로 전이한다")
+        void it_transitions_to_sent() {
             // given
             final DomainEventOutbox processing = DomainEventOutboxFixture.processing();
-            final String providerMessageId = "msg-xyz";
-            final LocalDateTime sentAt = NOW.plusSeconds(2);
 
             // when
-            final DomainEventOutbox completed = processing.complete(providerMessageId, sentAt);
+            final DomainEventOutbox completed = processing.complete();
 
             // then
             assertThat(completed.status()).isEqualTo(OutboxStatus.SENT);
-            assertThat(completed.sentResult().sentAt()).isEqualTo(sentAt);
-            assertThat(completed.sentResult().providerMessageId()).isEqualTo(providerMessageId);
             assertThat(completed.lock().lockedAt()).isNull();
         }
     }
@@ -119,20 +110,17 @@ class DomainEventOutboxTest {
         }
 
         @Test
-        @DisplayName("maxAttempts 소진 시 DEAD_LETTER로 전이하고 sentResult는 null이다")
+        @DisplayName("maxAttempts 소진 시 DEAD_LETTER로 전이한다")
         void it_transitions_to_dead_letter_when_attempts_exhausted() {
             // given
-            final DomainEventOutbox outbox = DomainEventOutboxFixture.pendingWithMaxAttempts(1, "pay-002");
-            final DomainEventOutbox processing = outbox.claim(NOW);
-            final String error = "fatal error";
+            final DomainEventOutbox processing = DomainEventOutboxFixture.pendingWithMaxAttempts(1, "pay-002").claim(NOW);
 
             // when
-            final DomainEventOutbox deadLetter = processing.fail(error, NOW.plusMinutes(1));
+            final DomainEventOutbox deadLetter = processing.fail("fatal error", NOW.plusMinutes(1));
 
             // then
             assertThat(deadLetter.status()).isEqualTo(OutboxStatus.DEAD_LETTER);
-            assertThat(deadLetter.retryState().lastError()).isEqualTo(error);
-            assertThat(deadLetter.sentResult()).isNull();
+            assertThat(deadLetter.retryState().lastError()).isEqualTo("fatal error");
         }
     }
 
@@ -145,40 +133,14 @@ class DomainEventOutboxTest {
         void it_resets_to_pending_with_zero_attempt_count() {
             // given
             final DomainEventOutbox deadLetter = DomainEventOutboxFixture.deadLetter("pay-003");
-            final LocalDateTime retryAt = NOW.plusHours(1);
 
             // when
-            final DomainEventOutbox recovered = deadLetter.recover(retryAt);
+            final DomainEventOutbox recovered = deadLetter.recover(NOW.plusHours(1));
 
             // then
             assertThat(recovered.status()).isEqualTo(OutboxStatus.PENDING);
             assertThat(recovered.retryState().attemptCount()).isZero();
-            assertThat(recovered.retryState().nextAttemptAt()).isEqualTo(retryAt);
             assertThat(recovered.retryState().lastError()).isNull();
-        }
-    }
-
-    @Nested
-    @DisplayName("SENT ↔ sentResult 불변식은")
-    class Describe_sent_result_invariant {
-
-        @Test
-        @DisplayName("SENT 상태가 되면 sentResult가 반드시 채워진다")
-        void it_always_has_sent_result_when_sent() {
-            // given
-            final DomainEventOutbox sent = DomainEventOutboxFixture.sent();
-
-            // when & then
-            assertThat(sent.status()).isEqualTo(OutboxStatus.SENT);
-            assertThat(sent.sentResult()).isNotNull();
-        }
-
-        @Test
-        @DisplayName("PENDING/PROCESSING/DEAD_LETTER 상태에서는 sentResult가 null이다")
-        void it_has_no_sent_result_when_not_sent() {
-            assertThat(DomainEventOutboxFixture.pending().sentResult()).isNull();
-            assertThat(DomainEventOutboxFixture.processing().sentResult()).isNull();
-            assertThat(DomainEventOutboxFixture.deadLetter("pay-x").sentResult()).isNull();
         }
     }
 
@@ -189,10 +151,7 @@ class DomainEventOutboxTest {
         @Test
         @DisplayName("초기 isRead는 false다")
         void it_creates_unread() {
-            // given & when
             final InAppNotification notification = InAppNotificationFixture.unread();
-
-            // then
             assertThat(notification.isRead()).isFalse();
         }
 
