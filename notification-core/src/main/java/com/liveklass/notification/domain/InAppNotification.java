@@ -1,5 +1,7 @@
 package com.liveklass.notification.domain;
 
+import com.liveklass.common.error.ExceptionCreator;
+import com.liveklass.notification.domain.exception.NotificationException;
 import com.liveklass.notification.domain.id.NotificationId;
 
 import java.time.LocalDateTime;
@@ -37,5 +39,12 @@ public record InAppNotification(
 
     public InAppNotification markRead() {
         return new InAppNotification(id, outboxId, recipientId, title, body, true, publishedAt, createdAt);
+    }
+
+    public void validateRecipient(final Long recipientId) {
+        if (!this.recipientId.equals(recipientId)) {
+            throw ExceptionCreator.create(NotificationException.NOTIFICATION_ACCESS_DENIED,
+                    "notificationId: " + id.id());
+        }
     }
 }
