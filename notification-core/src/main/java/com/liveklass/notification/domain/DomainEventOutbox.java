@@ -8,7 +8,6 @@ import com.liveklass.notification.domain.vo.IdempotencyKey;
 import com.liveklass.notification.domain.vo.EventRef;
 import com.liveklass.notification.domain.vo.ProcessingLock;
 import com.liveklass.notification.domain.vo.RetryState;
-import com.liveklass.notification.domain.vo.SentResult;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -18,51 +17,41 @@ import java.util.Objects;
 public record DomainEventOutbox(
         OutboxId id,
         String idempotencyKey,
+        Long requesterId,
         Long recipientId,
         EventRef eventRef,
         String payload,
         ProcessingLock lock,
-        RetryState retryState,
-        LocalDateTime scheduledAt,
-        SentResult sentResult
+        RetryState retryState
 ) {
     public DomainEventOutbox {
-        Objects.requireNonNull(idempotencyKey,   "idempotencyKey must not be null");
-        Objects.requireNonNull(recipientId,"recipientId must not be null");
-        Objects.requireNonNull(eventRef,   "eventRef must not be null");
-        Objects.requireNonNull(payload,    "payload must not be null");
-        Objects.requireNonNull(lock,       "lock must not be null");
-        Objects.requireNonNull(retryState, "retryState must not be null");
-
-        if (lock.status() == OutboxStatus.SENT && sentResult == null) {
-            throw ExceptionCreator.create(OutboxException.INVALID_OUTBOX,
-                    "sentResult must not be null when status is SENT");
-        }
-        if (lock.status() != OutboxStatus.SENT && sentResult != null) {
-            throw ExceptionCreator.create(OutboxException.INVALID_OUTBOX,
-                    "sentResult must be null when status is " + lock.status());
-        }
+        Objects.requireNonNull(idempotencyKey, "idempotencyKey must not be null");
+        Objects.requireNonNull(requesterId,    "requesterId must not be null");
+        Objects.requireNonNull(recipientId,    "recipientId must not be null");
+        Objects.requireNonNull(eventRef,       "eventRef must not be null");
+        Objects.requireNonNull(payload,        "payload must not be null");
+        Objects.requireNonNull(lock,           "lock must not be null");
+        Objects.requireNonNull(retryState,     "retryState must not be null");
     }
 
     public static DomainEventOutbox create(
             final IdempotencyKey idempotencyKey,
+            final Long requesterId,
             final Long recipientId,
             final EventRef eventRef,
             final String payload,
             final LocalDateTime nextAttemptAt,
-            final LocalDateTime scheduledAt,
             final int maxAttempts
     ) {
         return DomainEventOutbox.builder()
                 .id(new OutboxId(null))
                 .idempotencyKey(idempotencyKey.value())
+                .requesterId(requesterId)
                 .recipientId(recipientId)
                 .eventRef(eventRef)
                 .payload(payload)
                 .lock(ProcessingLock.pending())
                 .retryState(RetryState.initial(maxAttempts, nextAttemptAt))
-                .scheduledAt(scheduledAt)
-                .sentResult(null)
                 .build();
     }
 
@@ -76,11 +65,10 @@ public record DomainEventOutbox(
     }
 
     /** PROCESSING → SENT */
-    public DomainEventOutbox complete(final String providerMessageId, final LocalDateTime sentAt) {
+    public DomainEventOutbox complete() {
         lock.status().validateTransitionTo(OutboxStatus.SENT);
         return toBuilder()
                 .lock(ProcessingLock.sent())
-                .sentResult(SentResult.of(Objects.requireNonNull(sentAt), providerMessageId))
                 .build();
     }
 
@@ -115,11 +103,10 @@ public record DomainEventOutbox(
     }
 
     /** stuck recovery: PROCESSING → SENT 보정 */
-    public DomainEventOutbox correctToSent(final LocalDateTime sentAt, final String providerMessageId) {
+    public DomainEventOutbox correctToSent() {
         lock.status().validateTransitionTo(OutboxStatus.SENT);
         return toBuilder()
                 .lock(ProcessingLock.sent())
-                .sentResult(SentResult.of(Objects.requireNonNull(sentAt), providerMessageId))
                 .build();
     }
 
@@ -134,5 +121,12 @@ public record DomainEventOutbox(
 
     public OutboxStatus status() {
         return lock.status();
+    }
+
+    public void validateRequester(final Long requesterId) {
+        if (!this.requesterId.equals(requesterId)) {
+            throw ExceptionCreator.create(OutboxException.OUTBOX_ACCESS_DENIED,
+                    "outboxId: " + id.id());
+        }
     }
 }
