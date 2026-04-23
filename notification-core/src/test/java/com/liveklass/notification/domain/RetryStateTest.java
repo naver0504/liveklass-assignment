@@ -2,6 +2,7 @@ package com.liveklass.notification.domain;
 
 import com.liveklass.common.test.ExceptionAssertions;
 import com.liveklass.notification.domain.exception.OutboxException;
+import com.liveklass.notification.domain.vo.RetryState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
