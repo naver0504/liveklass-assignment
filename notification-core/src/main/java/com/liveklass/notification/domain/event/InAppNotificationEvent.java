@@ -1,6 +1,9 @@
 package com.liveklass.notification.domain.event;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.liveklass.common.event.ChannelType;
+import com.liveklass.common.event.DomainEvent;
+import com.liveklass.common.event.InAppPayload;
 import com.liveklass.common.event.Topic;
 
 import java.time.LocalDateTime;
@@ -13,7 +16,8 @@ public record InAppNotificationEvent(
         String title,
         String body,
         LocalDateTime publishedAt
-) {
+) implements DomainEvent {
+
     public InAppNotificationEvent {
         Objects.requireNonNull(topic,       "topic must not be null");
         Objects.requireNonNull(recipientId, "recipientId must not be null");
@@ -25,5 +29,10 @@ public record InAppNotificationEvent(
 
     public ChannelType channelType() {
         return ChannelType.IN_APP;
+    }
+
+    @Override
+    public JsonNode payload() {
+        return InAppPayload.builder(title, body).build();
     }
 }
