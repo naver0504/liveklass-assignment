@@ -4,7 +4,8 @@ plugins {
 }
 
 dependencies {
-	api 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation project(':liveklass-common')                   // Topic, ChannelType 등 공통 계약 내부 의존
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
 }
