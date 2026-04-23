@@ -1,4 +1,4 @@
-package com.liveklass.notification.domain;
+package com.liveklass.notification.domain.vo;
 
 import com.liveklass.common.error.ExceptionCreator;
 import com.liveklass.notification.domain.exception.OutboxException;
