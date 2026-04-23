@@ -4,6 +4,7 @@ plugins {
 }
 
 dependencies {
+	implementation project(':liveklass-common')                   // DomainEvent 등 공통 계약 내부 의존
 	api 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
