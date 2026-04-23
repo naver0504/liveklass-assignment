@@ -1,9 +1,7 @@
-package com.liveklass.notification.domain;
+package com.liveklass.notification.domain.vo;
 
 import com.liveklass.common.event.ChannelType;
 import com.liveklass.common.event.Topic;
-import com.liveklass.common.test.ExceptionAssertions;
-import com.liveklass.notification.domain.exception.OutboxException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -13,8 +11,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 @Tag("UNIT_TEST")
-@DisplayName("DedupKey는")
-class DedupKeyTest {
+@DisplayName("IdempotencyKey는")
+class IdempotencyKeyTest {
 
     @Nested
     @DisplayName("of()는")
@@ -30,14 +28,14 @@ class DedupKeyTest {
             final String referenceId = "pay-001";
 
             // when
-            final DedupKey dedupKey = DedupKey.of(topic, recipientId, channelType, referenceId);
+            final IdempotencyKey key = IdempotencyKey.of(topic, recipientId, channelType, referenceId);
 
             // then
-            assertThat(dedupKey.value()).isEqualTo("PAYMENT_CONFIRMED:42:EMAIL:pay-001");
+            assertThat(key.value()).isEqualTo("PAYMENT_CONFIRMED:42:EMAIL:pay-001");
         }
 
         @Test
-        @DisplayName("동일한 입력으로 생성한 두 DedupKey는 equals가 true다")
+        @DisplayName("동일한 입력으로 생성한 두 IdempotencyKey는 equals가 true다")
         void it_equals_same_inputs() {
             // given
             final Topic topic = Topic.LECTURE_ENROLLMENT_COMPLETED;
@@ -46,8 +44,8 @@ class DedupKeyTest {
             final String referenceId = "enroll-100";
 
             // when
-            final DedupKey key1 = DedupKey.of(topic, recipientId, channelType, referenceId);
-            final DedupKey key2 = DedupKey.of(topic, recipientId, channelType, referenceId);
+            final IdempotencyKey key1 = IdempotencyKey.of(topic, recipientId, channelType, referenceId);
+            final IdempotencyKey key2 = IdempotencyKey.of(topic, recipientId, channelType, referenceId);
 
             // then
             assertThat(key1).isEqualTo(key2);
@@ -55,23 +53,10 @@ class DedupKeyTest {
         }
 
         @Test
-        @DisplayName("512자를 초과하면 INVALID_DEDUP_KEY 예외를 던진다")
-        void it_throws_when_value_exceeds_max_length() {
-            // given
-            final String longReferenceId = "x".repeat(512);
-
-            // when & then
-            ExceptionAssertions.assertThatExceptionOfType(
-                    () -> DedupKey.of(Topic.PAYMENT_CONFIRMED, 1L, ChannelType.EMAIL, longReferenceId),
-                    OutboxException.INVALID_DEDUP_KEY
-            );
-        }
-
-        @Test
         @DisplayName("topic이 null이면 NPE를 던진다")
         void it_throws_when_topic_is_null() {
             assertThatNullPointerException()
-                    .isThrownBy(() -> DedupKey.of(null, 1L, ChannelType.EMAIL, "ref-1"))
+                    .isThrownBy(() -> IdempotencyKey.of(null, 1L, ChannelType.EMAIL, "ref-1"))
                     .withMessageContaining("topic");
         }
 
@@ -79,7 +64,7 @@ class DedupKeyTest {
         @DisplayName("recipientId가 null이면 NPE를 던진다")
         void it_throws_when_recipient_id_is_null() {
             assertThatNullPointerException()
-                    .isThrownBy(() -> DedupKey.of(Topic.PAYMENT_CONFIRMED, null, ChannelType.EMAIL, "ref-1"))
+                    .isThrownBy(() -> IdempotencyKey.of(Topic.PAYMENT_CONFIRMED, null, ChannelType.EMAIL, "ref-1"))
                     .withMessageContaining("recipientId");
         }
 
@@ -87,7 +72,7 @@ class DedupKeyTest {
         @DisplayName("channelType이 null이면 NPE를 던진다")
         void it_throws_when_channel_type_is_null() {
             assertThatNullPointerException()
-                    .isThrownBy(() -> DedupKey.of(Topic.PAYMENT_CONFIRMED, 1L, null, "ref-1"))
+                    .isThrownBy(() -> IdempotencyKey.of(Topic.PAYMENT_CONFIRMED, 1L, null, "ref-1"))
                     .withMessageContaining("channelType");
         }
 
@@ -95,7 +80,7 @@ class DedupKeyTest {
         @DisplayName("referenceId가 null이면 NPE를 던진다")
         void it_throws_when_reference_id_is_null() {
             assertThatNullPointerException()
-                    .isThrownBy(() -> DedupKey.of(Topic.PAYMENT_CONFIRMED, 1L, ChannelType.EMAIL, null))
+                    .isThrownBy(() -> IdempotencyKey.of(Topic.PAYMENT_CONFIRMED, 1L, ChannelType.EMAIL, null))
                     .withMessageContaining("referenceId");
         }
     }

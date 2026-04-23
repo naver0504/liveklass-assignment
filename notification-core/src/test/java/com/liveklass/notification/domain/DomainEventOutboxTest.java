@@ -1,10 +1,12 @@
 package com.liveklass.notification.domain;
 
 import com.liveklass.common.error.exception.BadRequestException;
+import com.liveklass.notification.domain.enums.OutboxStatus;
 import com.liveklass.notification.domain.vo.ProcessingLock;
 import com.liveklass.notification.domain.vo.SentResult;
 import com.liveklass.notification.fixture.DomainEventOutboxFixture;
-import com.liveklass.notification.fixture.NotificationFixture;
+import com.liveklass.notification.domain.InAppNotification;
+import com.liveklass.notification.fixture.InAppNotificationFixture;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -188,7 +190,7 @@ class DomainEventOutboxTest {
         @DisplayName("초기 isRead는 false다")
         void it_creates_unread() {
             // given & when
-            final Notification notification = NotificationFixture.unread();
+            final InAppNotification notification = InAppNotificationFixture.unread();
 
             // then
             assertThat(notification.isRead()).isFalse();
@@ -198,11 +200,11 @@ class DomainEventOutboxTest {
         @DisplayName("markRead()는 멱등하다")
         void it_marks_read_idempotently() {
             // given
-            final Notification notification = NotificationFixture.unread();
+            final InAppNotification notification = InAppNotificationFixture.unread();
 
             // when
-            final Notification read1 = notification.markRead();
-            final Notification read2 = read1.markRead();
+            final InAppNotification read1 = notification.markRead();
+            final InAppNotification read2 = read1.markRead();
 
             // then
             assertThat(read1.isRead()).isTrue();

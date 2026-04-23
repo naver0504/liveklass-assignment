@@ -1,11 +1,14 @@
 package com.liveklass.notification.domain;
 
-import com.liveklass.notification.domain.vo.EventRef;
-import com.liveklass.notification.domain.vo.OutboxId;
-import com.liveklass.notification.domain.vo.ProcessingLock;
-import com.liveklass.notification.domain.vo.SentResult;
 import com.liveklass.common.error.ExceptionCreator;
+import com.liveklass.notification.domain.enums.OutboxStatus;
 import com.liveklass.notification.domain.exception.OutboxException;
+import com.liveklass.notification.domain.id.OutboxId;
+import com.liveklass.notification.domain.vo.IdempotencyKey;
+import com.liveklass.notification.domain.vo.EventRef;
+import com.liveklass.notification.domain.vo.ProcessingLock;
+import com.liveklass.notification.domain.vo.RetryState;
+import com.liveklass.notification.domain.vo.SentResult;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -14,7 +17,7 @@ import java.util.Objects;
 @Builder(toBuilder = true)
 public record DomainEventOutbox(
         OutboxId id,
-        String dedupKey,
+        String idempotencyKey,
         Long recipientId,
         EventRef eventRef,
         String payload,
@@ -24,14 +27,13 @@ public record DomainEventOutbox(
         SentResult sentResult
 ) {
     public DomainEventOutbox {
-        Objects.requireNonNull(dedupKey,   "dedupKey must not be null");
+        Objects.requireNonNull(idempotencyKey,   "idempotencyKey must not be null");
         Objects.requireNonNull(recipientId,"recipientId must not be null");
         Objects.requireNonNull(eventRef,   "eventRef must not be null");
         Objects.requireNonNull(payload,    "payload must not be null");
         Objects.requireNonNull(lock,       "lock must not be null");
         Objects.requireNonNull(retryState, "retryState must not be null");
 
-        // SENT ↔ sentResult 불변식
         if (lock.status() == OutboxStatus.SENT && sentResult == null) {
             throw ExceptionCreator.create(OutboxException.INVALID_OUTBOX,
                     "sentResult must not be null when status is SENT");
@@ -43,7 +45,7 @@ public record DomainEventOutbox(
     }
 
     public static DomainEventOutbox create(
-            final DedupKey dedupKey,
+            final IdempotencyKey idempotencyKey,
             final Long recipientId,
             final EventRef eventRef,
             final String payload,
@@ -53,7 +55,7 @@ public record DomainEventOutbox(
     ) {
         return DomainEventOutbox.builder()
                 .id(new OutboxId(null))
-                .dedupKey(dedupKey.value())
+                .idempotencyKey(idempotencyKey.value())
                 .recipientId(recipientId)
                 .eventRef(eventRef)
                 .payload(payload)

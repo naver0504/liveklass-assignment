@@ -1,7 +1,7 @@
 package com.liveklass.notification.domain.vo;
 
 import com.liveklass.common.error.ExceptionCreator;
-import com.liveklass.notification.domain.OutboxStatus;
+import com.liveklass.notification.domain.enums.OutboxStatus;
 import com.liveklass.notification.domain.exception.OutboxException;
 
 import java.time.LocalDateTime;

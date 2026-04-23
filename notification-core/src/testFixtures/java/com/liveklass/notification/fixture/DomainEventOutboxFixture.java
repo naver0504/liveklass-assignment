@@ -2,11 +2,9 @@ package com.liveklass.notification.fixture;
 
 import com.liveklass.common.event.ChannelType;
 import com.liveklass.common.event.Topic;
-import com.liveklass.notification.domain.DedupKey;
 import com.liveklass.notification.domain.DomainEventOutbox;
-import com.liveklass.notification.domain.RetryState;
+import com.liveklass.notification.domain.vo.IdempotencyKey;
 import com.liveklass.notification.domain.vo.EventRef;
-import com.liveklass.notification.domain.vo.OutboxId;
 import com.liveklass.notification.domain.vo.ProcessingLock;
 import com.liveklass.notification.domain.vo.SentResult;
 
@@ -22,9 +20,13 @@ public final class DomainEventOutboxFixture {
 
     private DomainEventOutboxFixture() {}
 
+    public static IdempotencyKey defaultIdempotencyKey() {
+        return IdempotencyKey.of(Topic.PAYMENT_CONFIRMED, 1L, ChannelType.EMAIL, "pay-001");
+    }
+
     public static DomainEventOutbox pending() {
         return DomainEventOutbox.create(
-                DedupKey.of(Topic.PAYMENT_CONFIRMED, 1L, ChannelType.EMAIL, "pay-001"),
+                IdempotencyKey.of(Topic.PAYMENT_CONFIRMED, 1L, ChannelType.EMAIL, "pay-001"),
                 1L,
                 DEFAULT_EMAIL_EVENT,
                 "{\"subject\":\"결제 완료\",\"body\":\"49,000원\",\"metadata\":{\"recipientEmail\":\"user@example.com\"}}",
@@ -36,7 +38,7 @@ public final class DomainEventOutboxFixture {
 
     public static DomainEventOutbox pendingInApp() {
         return DomainEventOutbox.create(
-                DedupKey.of(Topic.LECTURE_ENROLLMENT_COMPLETED, 1L, ChannelType.IN_APP, "enroll-100"),
+                IdempotencyKey.of(Topic.LECTURE_ENROLLMENT_COMPLETED, 1L, ChannelType.IN_APP, "enroll-100"),
                 1L,
                 DEFAULT_IN_APP_EVENT,
                 "{\"title\":\"수강 신청 완료\",\"body\":\"Spring Boot 수강 신청이 완료되었습니다.\",\"metadata\":{}}",
@@ -49,7 +51,7 @@ public final class DomainEventOutboxFixture {
     public static DomainEventOutbox pendingWithMaxAttempts(final int maxAttempts, final String referenceId) {
         final EventRef eventRef = new EventRef(Topic.PAYMENT_CONFIRMED, ChannelType.EMAIL, referenceId);
         return DomainEventOutbox.create(
-                DedupKey.of(Topic.PAYMENT_CONFIRMED, 1L, ChannelType.EMAIL, referenceId),
+                IdempotencyKey.of(Topic.PAYMENT_CONFIRMED, 1L, ChannelType.EMAIL, referenceId),
                 1L,
                 eventRef,
                 "{\"subject\":\"결제 완료\",\"body\":\"본문\",\"metadata\":{\"recipientEmail\":\"user@example.com\"}}",
