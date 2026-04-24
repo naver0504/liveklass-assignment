@@ -6,6 +6,7 @@ plugins {
 dependencies {
 	api 'com.fasterxml.jackson.core:jackson-databind'   // DomainEvent.payload() JsonNode 노출
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testFixturesImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testFixturesImplementation 'org.assertj:assertj-core'
 }
 
