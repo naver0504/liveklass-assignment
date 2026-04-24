@@ -44,8 +44,7 @@ public class OutboxDispatcher {
             final NotificationPublisher publisher = publisherRegistry.get(channelType);
             if (publisher == null) {
                 log.error("[OutboxDispatcher] no publisher registered for channelType={}", channelType);
-                final PublishResult.PermanentFailure noPublisher =
-                        new PublishResult.PermanentFailure("no publisher registered for channelType: " + channelType);
+                final PublishResult.PermanentFailure noPublisher = new PublishResult.PermanentFailure("no publisher registered for channelType: " + channelType);
                 channelOutboxes.stream()
                         .map(o -> applyResult(o, noPublisher, now))
                         .forEach(results::add);
