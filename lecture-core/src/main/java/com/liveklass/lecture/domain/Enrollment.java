@@ -1,11 +1,13 @@
 package com.liveklass.lecture.domain;
 
+import com.liveklass.common.error.ExceptionCreator;
+import com.liveklass.lecture.domain.enums.EnrollmentStatus;
+import com.liveklass.lecture.domain.exception.EnrollmentException;
 import com.liveklass.lecture.domain.id.EnrollmentId;
 import com.liveklass.lecture.domain.id.LectureId;
 import com.liveklass.lecture.domain.id.UserId;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 public record Enrollment(
         EnrollmentId id,
@@ -16,11 +18,11 @@ public record Enrollment(
         LocalDateTime updatedAt
 ) {
     public Enrollment {
-        Objects.requireNonNull(lectureId, "lectureId must not be null");
-        Objects.requireNonNull(userId, "userId must not be null");
-        Objects.requireNonNull(status, "status must not be null");
-        Objects.requireNonNull(createdAt, "createdAt must not be null");
-        Objects.requireNonNull(updatedAt, "updatedAt must not be null");
+        requireLectureId(lectureId);
+        requireUserId(userId);
+        requireStatus(status);
+        requireCreatedAt(createdAt);
+        requireUpdatedAt(updatedAt);
     }
 
     public static Enrollment create(
@@ -28,17 +30,52 @@ public record Enrollment(
             final UserId userId,
             final LocalDateTime createdAt
     ) {
-        final LocalDateTime now = Objects.requireNonNull(createdAt, "createdAt must not be null");
-        return new Enrollment(null, lectureId, userId, EnrollmentStatus.ENROLLED, now, now);
+        return new Enrollment(null, lectureId, userId, EnrollmentStatus.ENROLLED, createdAt, createdAt);
     }
 
     public Enrollment cancel(final LocalDateTime cancelledAt) {
-        Objects.requireNonNull(cancelledAt, "cancelledAt must not be null");
+        requireCancelledAt(cancelledAt);
 
         if (status == EnrollmentStatus.CANCELLED) {
-            return this;
+            throw ExceptionCreator.create(EnrollmentException.ENROLLMENT_CANCEL_NOT_ALLOWED, "status: " + status);
         }
 
         return new Enrollment(id, lectureId, userId, EnrollmentStatus.CANCELLED, createdAt, cancelledAt);
+    }
+
+    private static void requireLectureId(final LectureId lectureId) {
+        if (lectureId == null) {
+            throw ExceptionCreator.create(EnrollmentException.ENROLLMENT_LECTURE_ID_REQUIRED, "field: lectureId");
+        }
+    }
+
+    private static void requireUserId(final UserId userId) {
+        if (userId == null) {
+            throw ExceptionCreator.create(EnrollmentException.ENROLLMENT_USER_ID_REQUIRED, "field: userId");
+        }
+    }
+
+    private static void requireStatus(final EnrollmentStatus status) {
+        if (status == null) {
+            throw ExceptionCreator.create(EnrollmentException.ENROLLMENT_STATUS_REQUIRED, "field: status");
+        }
+    }
+
+    private static void requireCreatedAt(final LocalDateTime createdAt) {
+        if (createdAt == null) {
+            throw ExceptionCreator.create(EnrollmentException.ENROLLMENT_CREATED_AT_REQUIRED, "field: createdAt");
+        }
+    }
+
+    private static void requireUpdatedAt(final LocalDateTime updatedAt) {
+        if (updatedAt == null) {
+            throw ExceptionCreator.create(EnrollmentException.ENROLLMENT_UPDATED_AT_REQUIRED, "field: updatedAt");
+        }
+    }
+
+    private static void requireCancelledAt(final LocalDateTime cancelledAt) {
+        if (cancelledAt == null) {
+            throw ExceptionCreator.create(EnrollmentException.ENROLLMENT_CANCELLED_AT_REQUIRED, "field: cancelledAt");
+        }
     }
 }

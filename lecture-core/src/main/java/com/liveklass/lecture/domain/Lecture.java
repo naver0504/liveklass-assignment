@@ -1,9 +1,10 @@
 package com.liveklass.lecture.domain;
 
+import com.liveklass.common.error.ExceptionCreator;
+import com.liveklass.lecture.domain.exception.LectureException;
 import com.liveklass.lecture.domain.id.LectureId;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 public record Lecture(
         LectureId id,
@@ -13,13 +14,36 @@ public record Lecture(
         LocalDateTime updatedAt
 ) {
     public Lecture {
-        Objects.requireNonNull(title, "title must not be null");
-        Objects.requireNonNull(startAt, "startAt must not be null");
-        Objects.requireNonNull(createdAt, "createdAt must not be null");
-        Objects.requireNonNull(updatedAt, "updatedAt must not be null");
+        requireTitle(title);
+        requireStartAt(startAt);
+        requireCreatedAt(createdAt);
+        requireUpdatedAt(updatedAt);
+    }
 
+    private static void requireTitle(final String title) {
+        if (title == null) {
+            throw ExceptionCreator.create(LectureException.LECTURE_TITLE_REQUIRED, "field: title");
+        }
         if (title.isBlank()) {
-            throw new IllegalArgumentException("title must not be blank");
+            throw ExceptionCreator.create(LectureException.LECTURE_TITLE_BLANK, "field: title");
+        }
+    }
+
+    private static void requireStartAt(final LocalDateTime startAt) {
+        if (startAt == null) {
+            throw ExceptionCreator.create(LectureException.LECTURE_START_AT_REQUIRED, "field: startAt");
+        }
+    }
+
+    private static void requireCreatedAt(final LocalDateTime createdAt) {
+        if (createdAt == null) {
+            throw ExceptionCreator.create(LectureException.LECTURE_CREATED_AT_REQUIRED, "field: createdAt");
+        }
+    }
+
+    private static void requireUpdatedAt(final LocalDateTime updatedAt) {
+        if (updatedAt == null) {
+            throw ExceptionCreator.create(LectureException.LECTURE_UPDATED_AT_REQUIRED, "field: updatedAt");
         }
     }
 }
