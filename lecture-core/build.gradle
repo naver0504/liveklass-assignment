@@ -8,6 +8,8 @@ dependencies {
 	api 'org.springframework.boot:spring-boot-starter-data-jpa'
 	runtimeOnly 'com.mysql:mysql-connector-j'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation(testFixtures(project(':liveklass-common')))
+	testFixturesImplementation(testFixtures(project(':liveklass-common')))
 }
 
 jar {
