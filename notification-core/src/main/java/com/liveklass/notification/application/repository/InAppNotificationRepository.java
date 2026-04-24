@@ -8,9 +8,13 @@ import java.util.Optional;
 
 public interface InAppNotificationRepository {
 
-    InAppNotification save(InAppNotification notification);
+    void save(InAppNotification notification);
+
+    void saveAll(List<InAppNotification> notifications);
 
     Optional<InAppNotification> findById(NotificationId id);
+
+    boolean existsByOutboxId(Long outboxId);
 
     List<InAppNotification> findAllByRecipientId(Long recipientId);
 

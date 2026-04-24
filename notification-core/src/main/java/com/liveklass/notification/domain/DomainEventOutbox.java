@@ -60,7 +60,6 @@ public record DomainEventOutbox(
         lock.status().validateTransitionTo(OutboxStatus.PROCESSING);
         return toBuilder()
                 .lock(ProcessingLock.processing(Objects.requireNonNull(lockedAt)))
-                .retryState(retryState.increment(retryState.nextAttemptAt()))
                 .build();
     }
 
@@ -69,18 +68,33 @@ public record DomainEventOutbox(
         lock.status().validateTransitionTo(OutboxStatus.SENT);
         return toBuilder()
                 .lock(ProcessingLock.sent())
+                .retryState(retryState.recordSuccess())
                 .build();
     }
 
     /** PROCESSING → PENDING (retry) or DEAD_LETTER */
     public DomainEventOutbox fail(final String error, final LocalDateTime nextAttemptAt) {
-        if (!retryState.isRetryable()) {
-            return markDeadLetter(error);
+        final RetryState failedState = retryState.recordFailure(error, nextAttemptAt);
+        if (!failedState.isRetryable()) {
+            lock.status().validateTransitionTo(OutboxStatus.DEAD_LETTER);
+            return toBuilder()
+                    .lock(ProcessingLock.deadLetter())
+                    .retryState(failedState)
+                    .build();
         }
         lock.status().validateTransitionTo(OutboxStatus.PENDING);
         return toBuilder()
                 .lock(ProcessingLock.pending())
-                .retryState(retryState.withFailure(error, Objects.requireNonNull(nextAttemptAt)))
+                .retryState(failedState)
+                .build();
+    }
+
+    /** PROCESSING → DEAD_LETTER */
+    public DomainEventOutbox permanentFail(final String error) {
+        lock.status().validateTransitionTo(OutboxStatus.DEAD_LETTER);
+        return toBuilder()
+                .lock(ProcessingLock.deadLetter())
+                .retryState(retryState.recordFailure(error, retryState.nextAttemptAt()))
                 .build();
     }
 
@@ -107,6 +121,7 @@ public record DomainEventOutbox(
         lock.status().validateTransitionTo(OutboxStatus.SENT);
         return toBuilder()
                 .lock(ProcessingLock.sent())
+                .retryState(retryState.recordSuccess())
                 .build();
     }
 
@@ -125,8 +140,7 @@ public record DomainEventOutbox(
 
     public void validateRequester(final Long requesterId) {
         if (!this.requesterId.equals(requesterId)) {
-            throw ExceptionCreator.create(OutboxException.OUTBOX_ACCESS_DENIED,
-                    "outboxId: " + id.id());
+            throw ExceptionCreator.create(OutboxException.OUTBOX_ACCESS_DENIED, "outboxId: " + id.id());
         }
     }
 }

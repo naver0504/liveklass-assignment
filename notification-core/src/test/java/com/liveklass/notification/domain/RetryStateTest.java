@@ -108,6 +108,48 @@ class RetryStateTest {
     }
 
     @Nested
+    @DisplayName("recordSuccess()는")
+    class Describe_record_success {
+
+        @Test
+        @DisplayName("attemptCount를 1 증가시키고 lastError를 지운다")
+        void it_increments_attempt_count_and_clears_error() {
+            // given
+            final RetryState state = new RetryState(1, 3, NOW, "temporary error");
+
+            // when
+            final RetryState success = state.recordSuccess();
+
+            // then
+            assertThat(success.attemptCount()).isEqualTo(2);
+            assertThat(success.lastError()).isNull();
+            assertThat(success.nextAttemptAt()).isEqualTo(NOW);
+        }
+    }
+
+    @Nested
+    @DisplayName("recordFailure()은")
+    class Describe_record_failure {
+
+        @Test
+        @DisplayName("attemptCount를 1 증가시키고 에러 메시지와 nextAttemptAt을 기록한다")
+        void it_increments_attempt_count_and_records_error() {
+            // given
+            final RetryState state = RetryState.initial(3, NOW);
+            final String error = "connection timeout";
+            final LocalDateTime nextAttemptAt = NOW.plusMinutes(2);
+
+            // when
+            final RetryState failed = state.recordFailure(error, nextAttemptAt);
+
+            // then
+            assertThat(failed.attemptCount()).isEqualTo(1);
+            assertThat(failed.lastError()).isEqualTo(error);
+            assertThat(failed.nextAttemptAt()).isEqualTo(nextAttemptAt);
+        }
+    }
+
+    @Nested
     @DisplayName("withFailure()은")
     class Describe_with_failure {
 

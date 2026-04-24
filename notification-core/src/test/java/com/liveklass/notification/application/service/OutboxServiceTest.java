@@ -23,6 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -44,14 +45,13 @@ class OutboxServiceTest {
     class Describe_createOutbox {
 
         @Test
-        @DisplayName("outbox를 저장하고 PENDING 상태로 반환한다")
-        void it_saves_and_returns_pending_outbox() {
+        @DisplayName("outbox를 생성해 PENDING 상태로 저장한다")
+        void it_saves_pending_outbox() {
             // given
             final DomainEventOutbox pending = DomainEventOutboxFixture.pending();
-            given(outboxRepository.save(any(DomainEventOutbox.class))).willReturn(pending);
 
             // when
-            final DomainEventOutbox result = outboxService.createOutbox(
+            outboxService.createOutbox(
                     DomainEventOutboxFixture.defaultIdempotencyKey().value(),
                     pending.requesterId(),
                     pending.recipientId(),
@@ -64,57 +64,69 @@ class OutboxServiceTest {
             );
 
             // then
-            assertThat(result.status()).isEqualTo(OutboxStatus.PENDING);
-            verify(outboxRepository).save(any(DomainEventOutbox.class));
+            verify(outboxRepository).save(argThat(outbox ->
+                    outbox.status() == OutboxStatus.PENDING
+                            && outbox.idempotencyKey().equals(DomainEventOutboxFixture.defaultIdempotencyKey().value())
+                            && outbox.requesterId().equals(pending.requesterId())
+                            && outbox.recipientId().equals(pending.recipientId())
+                            && outbox.eventRef().equals(pending.eventRef())
+                            && outbox.payload().equals(pending.payload())
+                            && outbox.retryState().attemptCount() == 0
+                            && outbox.retryState().maxAttempts() == 3
+                            && outbox.retryState().nextAttemptAt().equals(NOW)
+            ));
         }
     }
 
     @Nested
-    @DisplayName("claimAll()은")
-    class Describe_claimAll {
+    @DisplayName("claimPendingOutboxes()는")
+    class Describe_claimPendingOutboxes {
 
         @Test
-        @DisplayName("PENDING outbox 목록을 PROCESSING으로 전이하고 일괄 저장한다")
-        void it_claims_all_pending_outboxes() {
+        @DisplayName("조회한 PENDING outbox 목록을 PROCESSING으로 전이하고 일괄 저장한다")
+        void it_claims_pending_outboxes() {
             // given
             final List<DomainEventOutbox> pending = List.of(
                     DomainEventOutboxFixture.pending(),
                     DomainEventOutboxFixture.pendingInAppRequest()
             );
+            final int batchSize = 25;
+            given(outboxRepository.findPendingBefore(NOW, batchSize)).willReturn(pending);
             given(outboxRepository.saveAll(any())).willAnswer(inv -> inv.getArgument(0));
 
             // when
-            final List<DomainEventOutbox> result = outboxService.claimAll(pending, NOW);
+            final List<DomainEventOutbox> result = outboxService.claimPendingOutboxes(NOW, batchSize);
 
             // then
             assertThat(result).hasSize(2);
             result.forEach(o -> {
                 assertThat(o.status()).isEqualTo(OutboxStatus.PROCESSING);
                 assertThat(o.lock().lockedAt()).isEqualTo(NOW);
+                assertThat(o.retryState().attemptCount()).isZero();
             });
         }
     }
 
     @Nested
-    @DisplayName("saveAll()은")
-    class Describe_saveAll {
+    @DisplayName("saveAllProcessingResults()는")
+    class Describe_saveAllProcessingResults {
 
         @Test
-        @DisplayName("outbox 목록을 일괄 저장한다")
-        void it_saves_all_outboxes() {
+        @DisplayName("처리 결과 outbox 목록을 일괄 저장한다")
+        void it_saves_processing_results() {
             // given
             final List<DomainEventOutbox> outboxes = List.of(
-                    DomainEventOutboxFixture.processing(),
-                    DomainEventOutboxFixture.processing()
+                    DomainEventOutboxFixture.processing().complete(),
+                    DomainEventOutboxFixture.processing().fail("timeout", NOW.plusMinutes(1))
             );
-            given(outboxRepository.saveAll(any())).willAnswer(inv -> inv.getArgument(0));
+            given(outboxRepository.saveAllProcessingResults(any())).willAnswer(inv -> inv.getArgument(0));
 
             // when
-            final List<DomainEventOutbox> result = outboxService.saveAll(outboxes);
+            final List<DomainEventOutbox> result = outboxService.saveAllProcessingResults(outboxes);
 
             // then
             assertThat(result).hasSize(2);
-            verify(outboxRepository).saveAll(outboxes);
+            verify(outboxRepository).saveAllProcessingResults(outboxes);
         }
     }
 
@@ -183,26 +195,4 @@ class OutboxServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("findPendingOutboxes()는")
-    class Describe_findPendingOutboxes {
-
-        @Test
-        @DisplayName("50개 limit으로 PENDING outbox 목록을 반환한다")
-        void it_returns_pending_outboxes_with_limit() {
-            // given
-            final List<DomainEventOutbox> pending = List.of(
-                    DomainEventOutboxFixture.pending(),
-                    DomainEventOutboxFixture.pendingInAppRequest()
-            );
-            given(outboxRepository.findTop50PendingBefore(NOW)).willReturn(pending);
-
-            // when
-            final List<DomainEventOutbox> result = outboxService.findPendingOutboxes(NOW);
-
-            // then
-            assertThat(result).hasSize(2);
-            result.forEach(o -> assertThat(o.status()).isEqualTo(OutboxStatus.PENDING));
-        }
-    }
 }

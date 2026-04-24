@@ -37,6 +37,15 @@ public record RetryState(
                 Objects.requireNonNull(nextAttemptAt), lastError);
     }
 
+    public RetryState recordSuccess() {
+        return new RetryState(attemptCount + 1, maxAttempts, nextAttemptAt, null);
+    }
+
+    public RetryState recordFailure(final String error, final LocalDateTime nextAttemptAt) {
+        return new RetryState(attemptCount + 1, maxAttempts,
+                Objects.requireNonNull(nextAttemptAt), error);
+    }
+
     public RetryState withFailure(final String error, final LocalDateTime nextAttemptAt) {
         return new RetryState(attemptCount, maxAttempts,
                 Objects.requireNonNull(nextAttemptAt), error);

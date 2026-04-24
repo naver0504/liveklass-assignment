@@ -9,13 +9,15 @@ import java.util.Optional;
 
 public interface OutboxRepository {
 
-    DomainEventOutbox save(DomainEventOutbox outbox);
+    void save(DomainEventOutbox outbox);
 
     List<DomainEventOutbox> saveAll(List<DomainEventOutbox> outboxes);
 
+    List<DomainEventOutbox> saveAllProcessingResults(List<DomainEventOutbox> outboxes);
+
     Optional<DomainEventOutbox> findById(OutboxId id);
 
-    List<DomainEventOutbox> findTop50PendingBefore(LocalDateTime scheduledAt);
+    List<DomainEventOutbox> findPendingBefore(LocalDateTime scheduledAt, int limit);
 
     List<DomainEventOutbox> findStuckProcessing(LocalDateTime lockedBefore);
 }

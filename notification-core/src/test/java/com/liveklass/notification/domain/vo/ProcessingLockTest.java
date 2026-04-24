@@ -91,5 +91,19 @@ class ProcessingLockTest {
             assertThat(lock.status()).isEqualTo(OutboxStatus.DEAD_LETTER);
             assertThat(lock.lockedAt()).isNull();
         }
+
+        @Test
+        @DisplayName("of(status, lockedAt)는 상태에 맞는 lock 조합을 복원한다")
+        void it_restores_lock_from_status_and_locked_at() {
+            // when
+            final ProcessingLock processing = ProcessingLock.of(OutboxStatus.PROCESSING, NOW);
+            final ProcessingLock pending = ProcessingLock.of(OutboxStatus.PENDING, NOW.plusMinutes(1));
+
+            // then
+            assertThat(processing.status()).isEqualTo(OutboxStatus.PROCESSING);
+            assertThat(processing.lockedAt()).isEqualTo(NOW);
+            assertThat(pending.status()).isEqualTo(OutboxStatus.PENDING);
+            assertThat(pending.lockedAt()).isNull();
+        }
     }
 }

@@ -1,6 +1,5 @@
 package com.liveklass.notification.application.service;
 
-import com.liveklass.common.event.DomainEvent;
 import com.liveklass.common.event.DomainEventPublisher;
 import com.liveklass.common.event.Topic;
 import com.liveklass.notification.domain.event.EmailNotificationEvent;
@@ -50,9 +49,10 @@ class NotificationServiceTest {
             notificationService.requestInAppNotification(recipientId, referenceId, title, body, NOW);
 
             // then
-            final ArgumentCaptor<DomainEvent> captor = ArgumentCaptor.forClass(DomainEvent.class);
+            final ArgumentCaptor<com.liveklass.common.event.DomainEvent> captor =
+                    ArgumentCaptor.forClass(com.liveklass.common.event.DomainEvent.class);
             verify(eventPublisher).publish(captor.capture());
-            final DomainEvent published = captor.getValue();
+            final com.liveklass.common.event.DomainEvent published = captor.getValue();
             assertThat(published).isInstanceOf(InAppNotificationEvent.class);
             final InAppNotificationEvent event = (InAppNotificationEvent) published;
             assertThat(event.topic()).isEqualTo(Topic.IN_APP_NOTIFICATION_REQUEST);
@@ -82,9 +82,10 @@ class NotificationServiceTest {
             notificationService.requestEmailNotification(recipientId, referenceId, subject, body, recipientEmail, NOW);
 
             // then
-            final ArgumentCaptor<DomainEvent> captor = ArgumentCaptor.forClass(DomainEvent.class);
+            final ArgumentCaptor<com.liveklass.common.event.DomainEvent> captor =
+                    ArgumentCaptor.forClass(com.liveklass.common.event.DomainEvent.class);
             verify(eventPublisher).publish(captor.capture());
-            final DomainEvent published = captor.getValue();
+            final com.liveklass.common.event.DomainEvent published = captor.getValue();
             assertThat(published).isInstanceOf(EmailNotificationEvent.class);
             final EmailNotificationEvent event = (EmailNotificationEvent) published;
             assertThat(event.topic()).isEqualTo(Topic.EMAIL_NOTIFICATION_REQUEST);

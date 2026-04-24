@@ -20,8 +20,9 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @Tag("UNIT_TEST")
 @ExtendWith(MockitoExtension.class)
@@ -42,20 +43,43 @@ class InAppNotificationServiceTest {
 
         @Test
         @DisplayName("InAppNotification을 생성하고 저장한다")
-        void it_saves_and_returns_notification() {
-            // given
-            final InAppNotification unread = InAppNotificationFixture.unread(10L, 1L);
-            given(notificationRepository.save(any(InAppNotification.class))).willReturn(unread);
-
+        void it_saves_notification() {
             // when
-            final InAppNotification result = notificationService.createInAppNotification(
+            notificationService.createInAppNotification(
                     10L, 1L, "수강 신청 완료", "Spring Boot 수강 신청이 완료되었습니다.", NOW, NOW
             );
 
             // then
-            assertThat(result.isRead()).isFalse();
-            assertThat(result.recipientId()).isEqualTo(1L);
-            assertThat(result.outboxId()).isEqualTo(10L);
+            verify(notificationRepository).save(argThat(notification ->
+                    !notification.isRead()
+                            && notification.recipientId().equals(1L)
+                            && notification.outboxId().equals(10L)
+                            && notification.title().equals("수강 신청 완료")
+                            && notification.body().equals("Spring Boot 수강 신청이 완료되었습니다.")
+                            && notification.publishedAt().equals(NOW)
+                            && notification.createdAt().equals(NOW)
+            ));
+        }
+    }
+
+    @Nested
+    @DisplayName("createInAppNotificationsBatch()는")
+    class Describe_createInAppNotificationsBatch {
+
+        @Test
+        @DisplayName("알림 목록을 일괄 저장한다")
+        void it_saves_notifications_in_batch() {
+            // given
+            final List<InAppNotification> notifications = List.of(
+                    InAppNotificationFixture.unread(10L, 1L),
+                    InAppNotificationFixture.unread(11L, 1L)
+            );
+
+            // when
+            notificationService.createInAppNotificationsBatch(notifications);
+
+            // then
+            verify(notificationRepository).saveAll(notifications);
         }
     }
 
@@ -70,13 +94,12 @@ class InAppNotificationServiceTest {
             final Long notificationId = 1L;
             final InAppNotification unread = InAppNotificationFixture.unread();
             given(notificationRepository.findById(new NotificationId(notificationId))).willReturn(Optional.of(unread));
-            given(notificationRepository.save(any())).willAnswer(inv -> inv.getArgument(0));
 
             // when
-            final InAppNotification result = notificationService.markAsRead(notificationId);
+            notificationService.markAsRead(notificationId);
 
             // then
-            assertThat(result.isRead()).isTrue();
+            verify(notificationRepository).save(argThat(InAppNotification::isRead));
         }
 
         @Test
@@ -183,6 +206,24 @@ class InAppNotificationServiceTest {
             // then
             assertThat(result).hasSize(1);
             result.forEach(n -> assertThat(n.isRead()).isFalse());
+        }
+    }
+
+    @Nested
+    @DisplayName("existsByOutboxId()는")
+    class Describe_existsByOutboxId {
+
+        @Test
+        @DisplayName("outboxId에 해당하는 인앱 알림 존재 여부를 반환한다")
+        void it_returns_whether_notification_exists_for_outbox() {
+            // given
+            given(notificationRepository.existsByOutboxId(10L)).willReturn(true);
+
+            // when
+            final boolean result = notificationService.existsByOutboxId(10L);
+
+            // then
+            assertThat(result).isTrue();
         }
     }
 }
