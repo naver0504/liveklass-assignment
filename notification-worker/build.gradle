@@ -7,6 +7,7 @@ dependencies {
 	implementation project(':lecture-core')
 	implementation project(':liveklass-common')
 	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-json'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation(testFixtures(project(':notification-core')))
 }
