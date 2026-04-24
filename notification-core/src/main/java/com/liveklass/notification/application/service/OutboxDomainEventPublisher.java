@@ -1,24 +1,21 @@
-package com.liveklass.notification.worker.producer;
+package com.liveklass.notification.application.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.liveklass.common.event.ChannelType;
 import com.liveklass.common.event.DomainEvent;
 import com.liveklass.common.event.DomainEventPublisher;
 import com.liveklass.common.event.PayloadValidator;
-import com.liveklass.notification.application.service.OutboxService;
+import com.liveklass.notification.application.config.NotificationRetryProperties;
 import com.liveklass.notification.domain.vo.IdempotencyKey;
-import com.liveklass.notification.worker.config.WorkerProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-
-@Component
+@Service
 @RequiredArgsConstructor
-public class DomainEventPublisherAdapter implements DomainEventPublisher {
+public class OutboxDomainEventPublisher implements DomainEventPublisher {
 
     private final OutboxService outboxService;
-    private final WorkerProperties workerProperties;
+    private final NotificationRetryProperties retryProperties;
 
     @Override
     public void publish(final DomainEvent event) {
@@ -33,8 +30,8 @@ public class DomainEventPublisherAdapter implements DomainEventPublisher {
                 channelType,
                 event.referenceId(),
                 payload.toString(),
-                LocalDateTime.now(),
-                workerProperties.retry().maxAttempts(channelType)
+                event.publishedAt(),
+                retryProperties.maxAttempts(channelType)
         );
     }
 }

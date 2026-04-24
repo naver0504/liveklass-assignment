@@ -14,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -36,10 +35,7 @@ class OutboxPollingSchedulerTest {
     @DisplayName("설정된 batch size로 outbox를 claim하고 처리 결과 저장 메서드를 호출한다")
     void it_claims_with_configured_batch_size_and_saves_processing_results() {
         // given
-        final WorkerProperties workerProperties = new WorkerProperties(
-                new WorkerProperties.PollingProperties(true, 1000L, 25, 5L),
-                new WorkerProperties.RetryProperties(3, Map.of())
-        );
+        final WorkerProperties workerProperties = new WorkerProperties(true, 1000L, 25, 5L);
         final OutboxPollingScheduler scheduler =
                 new OutboxPollingScheduler(outboxService, outboxDispatcher, workerProperties);
         final List<DomainEventOutbox> claimed = List.of(DomainEventOutboxFixture.processing());

@@ -1,0 +1,10 @@
+notification:
+  retry:
+    default-max-attempts: 3
+    type-policy:
+      EMAIL:
+        max-attempts: 6
+        backoff-base-seconds: 30
+      IN_APP:
+        max-attempts: 3
+        backoff-base-seconds: 5

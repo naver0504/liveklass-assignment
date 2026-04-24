@@ -23,13 +23,13 @@ public class OutboxPollingScheduler {
 
     @Scheduled(fixedDelayString = "${notification.polling.fixed-delay-ms:1000}")
     public void poll() {
-        if (!workerProperties.polling().enabled()) {
+        if (!workerProperties.enabled()) {
             return;
         }
 
         final LocalDateTime now = LocalDateTime.now();
         final List<DomainEventOutbox> claimed = outboxService.claimPendingOutboxes(
-                now, workerProperties.polling().batchSize());
+                now, workerProperties.batchSize());
         if (claimed.isEmpty()) {
             return;
         }
