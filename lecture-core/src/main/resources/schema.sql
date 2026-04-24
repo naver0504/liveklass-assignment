@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS lecture (
+    id         BIGINT       NOT NULL AUTO_INCREMENT,
+    title      VARCHAR(255) NOT NULL,
+    start_at   DATETIME(6)  NOT NULL,
+    created_at DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6)  NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS enrollment (
+    id         BIGINT      NOT NULL AUTO_INCREMENT,
+    lecture_id BIGINT      NOT NULL,
+    user_id    BIGINT      NOT NULL,
+    status     VARCHAR(50) NOT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_lecture_user (lecture_id, user_id),
+    KEY idx_user (user_id, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

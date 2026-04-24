@@ -12,11 +12,6 @@ spring:
       ddl-auto: none
     show-sql: false
     open-in-view: false
-  sql:
-    init:
-      mode: always
-      schema-locations: classpath:schema.sql
-
 notification:
   polling:
     enabled: true

@@ -1,4 +1,4 @@
-package com.liveklass.notification;
+package com.liveklass;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
