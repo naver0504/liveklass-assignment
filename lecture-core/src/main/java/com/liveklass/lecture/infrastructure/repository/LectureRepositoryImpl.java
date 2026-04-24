@@ -18,6 +18,11 @@ public class LectureRepositoryImpl implements LectureRepository {
     private final LectureEntityMapper mapper;
 
     @Override
+    public Lecture save(final Lecture lecture) {
+        return mapper.toDomain(jpaLectureRepository.save(mapper.toEntity(lecture)));
+    }
+
+    @Override
     public Optional<Lecture> findById(final LectureId id) {
         return jpaLectureRepository.findById(id.value())
                 .map(mapper::toDomain);
