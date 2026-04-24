@@ -8,11 +8,27 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:}
   jpa:
-    open-in-view: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
 
 notification:
-  role:
-    api: false
-    worker: true
+  polling:
+    enabled: true
+    fixed-delay-ms: 1000
+    batch-size: 50
+    stuck-threshold-minutes: 5
+  retry:
+    default-max-attempts: 3
+    type-policy:
+      EMAIL:
+        max-attempts: 6
+        backoff-base-seconds: 30
+      IN_APP:
+        max-attempts: 3
+        backoff-base-seconds: 5

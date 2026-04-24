@@ -6,10 +6,9 @@ import org.assertj.core.api.ThrowableAssert;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public final class ExceptionAssertions {
+public class ExceptionAssertions {
 
-    private ExceptionAssertions() {
-    }
+    private ExceptionAssertions() {}
 
     public static void assertThatExceptionOfType(
             final ThrowableAssert.ThrowingCallable callable,

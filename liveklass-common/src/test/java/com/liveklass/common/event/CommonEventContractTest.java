@@ -37,7 +37,9 @@ class CommonEventContractTest {
                     "LECTURE_ENROLLMENT_COMPLETED",
                     "LECTURE_ENROLLMENT_CANCELLED",
                     "PAYMENT_CONFIRMED",
-                    "LECTURE_STARTING_SOON"
+                    "LECTURE_STARTING_SOON",
+                    "IN_APP_NOTIFICATION_REQUEST",
+                    "EMAIL_NOTIFICATION_REQUEST"
             );
         }
     }
