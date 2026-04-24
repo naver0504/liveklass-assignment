@@ -26,4 +26,13 @@ public record ProcessingLock(
     public static ProcessingLock processing(final LocalDateTime lockedAt) { return new ProcessingLock(OutboxStatus.PROCESSING, lockedAt); }
     public static ProcessingLock sent()                                { return new ProcessingLock(OutboxStatus.SENT, null); }
     public static ProcessingLock deadLetter()                          { return new ProcessingLock(OutboxStatus.DEAD_LETTER, null); }
+
+    public static ProcessingLock of(final OutboxStatus status, final LocalDateTime lockedAt) {
+        return switch (status) {
+            case PROCESSING  -> processing(lockedAt);
+            case SENT        -> sent();
+            case DEAD_LETTER -> deadLetter();
+            case PENDING     -> pending();
+        };
+    }
 }
