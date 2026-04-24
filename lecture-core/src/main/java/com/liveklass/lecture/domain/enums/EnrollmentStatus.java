@@ -1,4 +1,4 @@
-package com.liveklass.lecture.domain;
+package com.liveklass.lecture.domain.enums;
 
 public enum EnrollmentStatus {
     ENROLLED,
