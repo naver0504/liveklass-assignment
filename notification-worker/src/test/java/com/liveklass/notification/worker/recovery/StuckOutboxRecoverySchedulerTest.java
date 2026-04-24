@@ -50,10 +50,7 @@ class StuckOutboxRecoverySchedulerTest {
         scheduler = new StuckOutboxRecoveryScheduler(
                 List.of(inAppVerifier, emailVerifier),
                 outboxService,
-                new WorkerProperties(
-                        new WorkerProperties.PollingProperties(true, 1000L, 50, 5L),
-                        new WorkerProperties.RetryProperties(3, java.util.Map.of())
-                )
+                new WorkerProperties(true, 1000L, 50, 5L)
         );
     }
 

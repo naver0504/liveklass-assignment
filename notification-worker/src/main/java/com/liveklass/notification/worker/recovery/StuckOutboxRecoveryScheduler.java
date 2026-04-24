@@ -39,7 +39,7 @@ public class StuckOutboxRecoveryScheduler {
 
     @Scheduled(fixedDelay = 60_000)
     public void recover() {
-        final long stuckThresholdMinutes = workerProperties.polling().stuckThresholdMinutes();
+        final long stuckThresholdMinutes = workerProperties.stuckThresholdMinutes();
         final LocalDateTime now = LocalDateTime.now();
         final LocalDateTime lockedBefore = now.minusMinutes(stuckThresholdMinutes);
 
