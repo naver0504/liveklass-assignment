@@ -4,6 +4,11 @@ plugins {
 
 dependencies {
 	implementation project(':notification-core')
+	implementation project(':lecture-core')
+	implementation project(':liveklass-common')
+	implementation 'org.springframework.boot:spring-boot-starter'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation(testFixtures(project(':notification-core')))
 }
 
 bootJar {
