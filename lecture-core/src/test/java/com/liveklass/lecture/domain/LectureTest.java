@@ -1,5 +1,7 @@
 package com.liveklass.lecture.domain;
 
+import com.liveklass.common.test.ExceptionAssertions;
+import com.liveklass.lecture.domain.exception.LectureException;
 import com.liveklass.lecture.domain.id.LectureId;
 import com.liveklass.lecture.fixture.LectureFixture;
 import org.junit.jupiter.api.DisplayName;
@@ -10,8 +12,6 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 @Tag("UNIT_TEST")
 @DisplayName("Lecture는")
@@ -39,27 +39,30 @@ class LectureTest {
         }
 
         @Test
+        @DisplayName("title이 null이면 예외를 던진다")
+        void it_throws_when_title_is_null() {
+            ExceptionAssertions.assertThatExceptionOfType(
+                    () -> LectureFixture.lecture((String) null),
+                    LectureException.LECTURE_TITLE_REQUIRED
+            );
+        }
+
+        @Test
         @DisplayName("title이 blank면 예외를 던진다")
         void it_throws_when_title_is_blank() {
-            // given
-            final String blankTitle = "   ";
-
-            // when & then
-            assertThatIllegalArgumentException()
-                    .isThrownBy(() -> LectureFixture.lecture(blankTitle))
-                    .withMessageContaining("title");
+            ExceptionAssertions.assertThatExceptionOfType(
+                    () -> LectureFixture.lecture("   "),
+                    LectureException.LECTURE_TITLE_BLANK
+            );
         }
 
         @Test
         @DisplayName("startAt이 null이면 예외를 던진다")
         void it_throws_when_start_at_is_null() {
-            // given
-            final LocalDateTime nullStartAt = null;
-
-            // when & then
-            assertThatNullPointerException()
-                    .isThrownBy(() -> LectureFixture.lecture(nullStartAt))
-                    .withMessageContaining("startAt");
+            ExceptionAssertions.assertThatExceptionOfType(
+                    () -> LectureFixture.lecture((LocalDateTime) null),
+                    LectureException.LECTURE_START_AT_REQUIRED
+            );
         }
     }
 }

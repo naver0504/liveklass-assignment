@@ -1,7 +1,7 @@
 package com.liveklass.lecture.fixture;
 
 import com.liveklass.lecture.domain.Enrollment;
-import com.liveklass.lecture.domain.EnrollmentStatus;
+import com.liveklass.lecture.domain.enums.EnrollmentStatus;
 import com.liveklass.lecture.domain.id.EnrollmentId;
 import com.liveklass.lecture.domain.id.LectureId;
 import com.liveklass.lecture.domain.id.UserId;
