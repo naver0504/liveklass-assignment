@@ -33,6 +33,8 @@ public record InAppNotificationEvent(
 
     @Override
     public JsonNode payload() {
-        return InAppPayload.builder(title, body).build();
+        return InAppPayload.builder(title, body)
+                .metadata("publishedAt", publishedAt.toString())
+                .build();
     }
 }
