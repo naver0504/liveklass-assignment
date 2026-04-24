@@ -42,7 +42,7 @@ class DomainEventOutboxTest {
     class Describe_claim {
 
         @Test
-        @DisplayName("PENDING → PROCESSING으로 전이하고 lock과 attemptCount가 갱신된다")
+        @DisplayName("PENDING → PROCESSING으로 전이하고 lock만 설정된다")
         void it_transitions_to_processing() {
             // given
             final DomainEventOutbox outbox = DomainEventOutboxFixture.pending();
@@ -53,7 +53,7 @@ class DomainEventOutboxTest {
             // then
             assertThat(claimed.status()).isEqualTo(OutboxStatus.PROCESSING);
             assertThat(claimed.lock().lockedAt()).isEqualTo(NOW);
-            assertThat(claimed.retryState().attemptCount()).isEqualTo(1);
+            assertThat(claimed.retryState().attemptCount()).isZero();
         }
 
         @Test
@@ -73,7 +73,7 @@ class DomainEventOutboxTest {
     class Describe_complete {
 
         @Test
-        @DisplayName("PROCESSING → SENT로 전이한다")
+        @DisplayName("PROCESSING → SENT로 전이하고 attemptCount를 증가시킨다")
         void it_transitions_to_sent() {
             // given
             final DomainEventOutbox processing = DomainEventOutboxFixture.processing();
@@ -84,6 +84,7 @@ class DomainEventOutboxTest {
             // then
             assertThat(completed.status()).isEqualTo(OutboxStatus.SENT);
             assertThat(completed.lock().lockedAt()).isNull();
+            assertThat(completed.retryState().attemptCount()).isEqualTo(1);
         }
     }
 
@@ -92,7 +93,7 @@ class DomainEventOutboxTest {
     class Describe_fail {
 
         @Test
-        @DisplayName("재시도 가능하면 PENDING으로 돌아가고 lastError가 기록된다")
+        @DisplayName("재시도 가능하면 PENDING으로 돌아가고 attemptCount와 lastError가 기록된다")
         void it_returns_to_pending_with_error_when_retryable() {
             // given
             final DomainEventOutbox processing = DomainEventOutboxFixture.processing();
@@ -104,6 +105,7 @@ class DomainEventOutboxTest {
 
             // then
             assertThat(failed.status()).isEqualTo(OutboxStatus.PENDING);
+            assertThat(failed.retryState().attemptCount()).isEqualTo(1);
             assertThat(failed.retryState().lastError()).isEqualTo(error);
             assertThat(failed.retryState().nextAttemptAt()).isEqualTo(nextAttemptAt);
             assertThat(failed.lock().lockedAt()).isNull();
@@ -120,6 +122,7 @@ class DomainEventOutboxTest {
 
             // then
             assertThat(deadLetter.status()).isEqualTo(OutboxStatus.DEAD_LETTER);
+            assertThat(deadLetter.retryState().attemptCount()).isEqualTo(1);
             assertThat(deadLetter.retryState().lastError()).isEqualTo("fatal error");
         }
     }
