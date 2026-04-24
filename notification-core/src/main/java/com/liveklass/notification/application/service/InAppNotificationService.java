@@ -19,7 +19,7 @@ public class InAppNotificationService {
     private final InAppNotificationRepository notificationRepository;
 
     @Transactional
-    public InAppNotification createInAppNotification(
+    public void createInAppNotification(
             final Long outboxId,
             final Long recipientId,
             final String title,
@@ -27,17 +27,23 @@ public class InAppNotificationService {
             final LocalDateTime publishedAt,
             final LocalDateTime createdAt
     ) {
-        return notificationRepository.save(
+        notificationRepository.save(
                 InAppNotification.create(outboxId, recipientId, title, body, publishedAt, createdAt)
         );
     }
 
     @Transactional
-    public InAppNotification markAsRead(final Long notificationId) {
+    public void createInAppNotificationsBatch(final List<InAppNotification> notifications) {
+        notificationRepository.saveAll(notifications);
+    }
+
+    @Transactional
+    public void markAsRead(final Long notificationId) {
         final InAppNotification notification = notificationRepository.findById(new NotificationId(notificationId))
                 .orElseThrow(() -> ExceptionCreator.create(NotificationException.NOTIFICATION_NOT_FOUND,
                         "notificationId: " + notificationId));
-        return notificationRepository.save(notification.markRead());
+
+        notificationRepository.save(notification.markRead());
     }
 
     @Transactional(readOnly = true)
@@ -57,5 +63,10 @@ public class InAppNotificationService {
     @Transactional(readOnly = true)
     public List<InAppNotification> findAllByRecipientId(final Long recipientId, final boolean isRead) {
         return notificationRepository.findAllByRecipientIdAndIsRead(recipientId, isRead);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsByOutboxId(final Long outboxId) {
+        return notificationRepository.existsByOutboxId(outboxId);
     }
 }
