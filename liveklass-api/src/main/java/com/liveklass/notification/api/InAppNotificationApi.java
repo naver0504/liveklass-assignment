@@ -17,12 +17,12 @@ import java.util.List;
 public interface InAppNotificationApi {
 
     @Operation(summary = "인앱 알림 목록 조회",
-            description = "수신자 기준 인앱 알림 목록을 조회합니다. isRead 파라미터로 읽음/안읽음을 필터링할 수 있습니다.")
+            description = "수신자 기준 인앱 알림 목록을 조회합니다. isRead 파라미터로 읽음/안읽음을 필터링합니다.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @GetMapping
     List<InAppNotificationResponse> list(
             @Parameter(description = "수신자 ID") @RequestHeader("X-User-Id") Long recipientId,
-            @Parameter(description = "읽음 여부 필터 (생략 시 전체)") @RequestParam boolean isRead
+            @Parameter(description = "읽음 여부 필터") @RequestParam boolean isRead
     );
 
     @Operation(summary = "인앱 알림 읽음 처리",
