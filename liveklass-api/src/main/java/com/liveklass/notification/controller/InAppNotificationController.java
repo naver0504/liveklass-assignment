@@ -24,6 +24,7 @@ public class InAppNotificationController implements InAppNotificationApi {
 
     @Override
     public void markAsRead(final Long id, final Long userId) {
-        inAppNotificationService.markAsRead(id, userId);
+        inAppNotificationService.findById(id, userId);
+        inAppNotificationService.markAsRead(id);
     }
 }

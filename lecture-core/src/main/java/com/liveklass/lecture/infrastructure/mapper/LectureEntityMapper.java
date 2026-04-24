@@ -17,4 +17,14 @@ public class LectureEntityMapper {
                 entity.getUpdatedAt()
         );
     }
+
+    public LectureJpaEntity toEntity(final Lecture lecture) {
+        return new LectureJpaEntity(
+                lecture.id() != null ? lecture.id().value() : null,
+                lecture.title(),
+                lecture.startAt(),
+                lecture.createdAt(),
+                lecture.updatedAt()
+        );
+    }
 }
