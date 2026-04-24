@@ -23,7 +23,7 @@ public class OutboxService {
     private final OutboxRepository outboxRepository;
 
     @Transactional
-    public DomainEventOutbox createOutbox(
+    public void createOutbox(
             final String idempotencyKey,
             final Long requesterId,
             final Long recipientId,
@@ -34,7 +34,7 @@ public class OutboxService {
             final LocalDateTime nextAttemptAt,
             final int maxAttempts
     ) {
-        return outboxRepository.save(
+        outboxRepository.save(
                 DomainEventOutbox.create(
                         new IdempotencyKey(idempotencyKey),
                         requesterId,
@@ -48,16 +48,20 @@ public class OutboxService {
     }
 
     @Transactional
-    public List<DomainEventOutbox> claimAll(final List<DomainEventOutbox> outboxes, final LocalDateTime lockedAt) {
-        final List<DomainEventOutbox> claimed = outboxes.stream()
-                .map(o -> o.claim(lockedAt))
+    public List<DomainEventOutbox> claimPendingOutboxes(final LocalDateTime now, final int batchSize) {
+        final List<DomainEventOutbox> pending = outboxRepository.findPendingBefore(now, batchSize);
+        if (pending.isEmpty()) {
+            return List.of();
+        }
+        final List<DomainEventOutbox> claimed = pending.stream()
+                .map(o -> o.claim(now))
                 .toList();
         return outboxRepository.saveAll(claimed);
     }
 
     @Transactional
-    public List<DomainEventOutbox> saveAll(final List<DomainEventOutbox> outboxes) {
-        return outboxRepository.saveAll(outboxes);
+    public List<DomainEventOutbox> saveAllProcessingResults(final List<DomainEventOutbox> outboxes) {
+        return outboxRepository.saveAllProcessingResults(outboxes);
     }
 
     @Transactional(readOnly = true)
@@ -70,11 +74,6 @@ public class OutboxService {
         }
         outbox.validateRequester(requesterId);
         return outbox;
-    }
-
-    @Transactional(readOnly = true)
-    public List<DomainEventOutbox> findPendingOutboxes(final LocalDateTime scheduledAt) {
-        return outboxRepository.findTop50PendingBefore(scheduledAt);
     }
 
     @Transactional(readOnly = true)
