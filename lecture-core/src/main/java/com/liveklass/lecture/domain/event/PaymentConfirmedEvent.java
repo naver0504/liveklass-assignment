@@ -3,12 +3,13 @@ package com.liveklass.lecture.domain.event;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.liveklass.common.error.ExceptionCreator;
 import com.liveklass.common.event.DomainEvent;
 import com.liveklass.common.event.EmailPayload;
 import com.liveklass.common.event.Topic;
+import com.liveklass.lecture.domain.exception.EnrollmentException;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 public record PaymentConfirmedEvent(
         String paymentId,
@@ -22,29 +23,16 @@ public record PaymentConfirmedEvent(
         LocalDateTime publishedAt
 ) implements DomainEvent {
     public PaymentConfirmedEvent {
-        Objects.requireNonNull(paymentId, "paymentId must not be null");
-        Objects.requireNonNull(userId, "userId must not be null");
-        Objects.requireNonNull(enrollmentId, "enrollmentId must not be null");
-        Objects.requireNonNull(currency, "currency must not be null");
-        Objects.requireNonNull(recipientEmail, "recipientEmail must not be null");
-        Objects.requireNonNull(recipientId, "recipientId must not be null");
-        Objects.requireNonNull(referenceId, "referenceId must not be null");
-        Objects.requireNonNull(publishedAt, "publishedAt must not be null");
-
-        if (paymentId.isBlank()) {
-            throw new IllegalArgumentException("paymentId must not be blank");
-        }
-        if (currency.isBlank()) {
-            throw new IllegalArgumentException("currency must not be blank");
-        }
-        if (recipientEmail.isBlank()) {
-            throw new IllegalArgumentException("recipientEmail must not be blank");
-        }
-        if (referenceId.isBlank()) {
-            throw new IllegalArgumentException("referenceId must not be blank");
-        }
-        if (amount <= 0) {
-            throw new IllegalArgumentException("amount must be greater than 0");
+        requireText(paymentId, "paymentId");
+        requireValue(userId, "userId");
+        requireValue(enrollmentId, "enrollmentId");
+        requireText(currency, "currency");
+        requireText(recipientEmail, "recipientEmail");
+        requireValue(recipientId, "recipientId");
+        requireText(referenceId, "referenceId");
+        requireValue(publishedAt, "publishedAt");
+        if (amount < 0) {
+            throw ExceptionCreator.create(EnrollmentException.PAYMENT_EVENT_AMOUNT_INVALID, "field: amount");
         }
     }
 
@@ -65,5 +53,20 @@ public record PaymentConfirmedEvent(
                 .metadata("currency", currency)
                 .metadata("confirmedAt", publishedAt.toString())
                 .build();
+    }
+
+    private static void requireValue(final Object value, final String fieldName) {
+        if (value == null) {
+            throw ExceptionCreator.create(EnrollmentException.PAYMENT_EVENT_REQUIRED, "field: " + fieldName);
+        }
+    }
+
+    private static void requireText(final String value, final String fieldName) {
+        if (value == null) {
+            throw ExceptionCreator.create(EnrollmentException.PAYMENT_EVENT_REQUIRED, "field: " + fieldName);
+        }
+        if (value.isBlank()) {
+            throw ExceptionCreator.create(EnrollmentException.PAYMENT_EVENT_BLANK, "field: " + fieldName);
+        }
     }
 }
