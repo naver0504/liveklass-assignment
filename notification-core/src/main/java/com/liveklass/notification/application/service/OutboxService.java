@@ -76,6 +76,14 @@ public class OutboxService {
         return outbox;
     }
 
+    @Transactional
+    public void manualRetry(final Long outboxId) {
+        final DomainEventOutbox outbox = outboxRepository.findById(new OutboxId(outboxId))
+                .orElseThrow(() -> ExceptionCreator.create(OutboxException.OUTBOX_NOT_FOUND,
+                        "outboxId: " + outboxId));
+        outboxRepository.save(outbox.recover(LocalDateTime.now()));
+    }
+
     @Transactional(readOnly = true)
     public List<DomainEventOutbox> findStuckOutboxes(final LocalDateTime lockedBefore) {
         return outboxRepository.findStuckProcessing(lockedBefore);

@@ -38,10 +38,12 @@ public class InAppNotificationService {
     }
 
     @Transactional
-    public void markAsRead(final Long notificationId) {
+    public void markAsRead(final Long notificationId, final Long userId) {
         final InAppNotification notification = notificationRepository.findById(new NotificationId(notificationId))
                 .orElseThrow(() -> ExceptionCreator.create(NotificationException.NOTIFICATION_NOT_FOUND,
                         "notificationId: " + notificationId));
+
+        notification.validateRecipient(userId);
 
         notificationRepository.save(notification.markRead());
     }

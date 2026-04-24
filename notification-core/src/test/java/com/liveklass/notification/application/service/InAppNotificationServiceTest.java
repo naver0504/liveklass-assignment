@@ -92,11 +92,12 @@ class InAppNotificationServiceTest {
         void it_marks_notification_as_read() {
             // given
             final Long notificationId = 1L;
-            final InAppNotification unread = InAppNotificationFixture.unread();
+            final Long recipientId = 1L;
+            final InAppNotification unread = InAppNotificationFixture.unread(10L, recipientId);
             given(notificationRepository.findById(new NotificationId(notificationId))).willReturn(Optional.of(unread));
 
             // when
-            notificationService.markAsRead(notificationId);
+            notificationService.markAsRead(notificationId, recipientId);
 
             // then
             verify(notificationRepository).save(argThat(InAppNotification::isRead));
@@ -111,7 +112,7 @@ class InAppNotificationServiceTest {
 
             // when & then
             ExceptionAssertions.assertThatExceptionOfType(
-                    () -> notificationService.markAsRead(notificationId),
+                    () -> notificationService.markAsRead(notificationId, 1L),
                     NotificationException.NOTIFICATION_NOT_FOUND
             );
         }
